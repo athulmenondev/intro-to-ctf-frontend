@@ -1,0 +1,188 @@
+/* ═══════════════════════════════════════════════════
+   Leaderboard — Glassmorphism Panel
+   ═══════════════════════════════════════════════════ */
+
+.leaderboard {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  animation: slideInRight 600ms ease-out both;
+  position: sticky;
+  top: 90px;
+  overflow: hidden;
+}
+
+/* Subtle gradient overlay on glass */
+.leaderboard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    transparent 30%,
+    transparent 70%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Header ── */
+.leaderboard-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-dim);
+  position: relative;
+}
+
+.leaderboard-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--neon-amber);
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 184, 0, 0.08);
+  border: 1px solid rgba(255, 184, 0, 0.15);
+}
+
+.leaderboard-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+/* ── List ── */
+.leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+/* ── Entry ── */
+.lb-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  transition: var(--transition-base);
+  animation: fadeIn 400ms ease-out both;
+  position: relative;
+}
+
+.lb-entry:hover {
+  background: var(--bg-glass-hover);
+}
+
+.lb-entry--first {
+  background: rgba(255, 184, 0, 0.04);
+  border: 1px solid rgba(255, 184, 0, 0.08);
+}
+
+.lb-entry--first:hover {
+  background: rgba(255, 184, 0, 0.08);
+}
+
+/* Rank */
+.lb-rank {
+  font-size: 1.1rem;
+  font-weight: 800;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+  animation: rank-glow 3s ease-in-out infinite;
+}
+
+/* Avatar */
+.lb-avatar {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Info */
+.lb-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.lb-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-solved {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+/* Points */
+.lb-points {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--neon-emerald);
+  flex-shrink: 0;
+}
+
+/* ── User Section ── */
+.lb-user-section {
+  margin-top: 16px;
+  position: relative;
+}
+
+.lb-divider-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-medium), transparent);
+  margin-bottom: 14px;
+}
+
+.lb-user-position {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-md);
+}
+
+.lb-user-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+}
+
+.lb-user-points {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--neon-emerald);
+  text-shadow: 0 0 10px var(--neon-emerald-glow);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .leaderboard {
+    position: static;
+    animation: fadeInUp 600ms ease-out both;
+  }
+}

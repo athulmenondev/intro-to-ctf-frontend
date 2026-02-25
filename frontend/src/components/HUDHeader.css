@@ -1,0 +1,150 @@
+.hud-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  animation: fadeIn 500ms ease-out;
+}
+
+/* ── Brand ── */
+.hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hud-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--neon-emerald-glow), transparent);
+  border: 1px solid rgba(0, 255, 157, 0.15);
+  color: var(--neon-emerald);
+}
+
+.hud-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.hud-title-bracket {
+  color: var(--neon-emerald);
+  margin-right: 4px;
+}
+
+.hud-cursor {
+  display: inline-block;
+  color: var(--neon-emerald);
+  animation: pulse-glow 1s step-end infinite;
+  margin-left: 2px;
+}
+
+.hud-subtitle {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+/* ── Stats ── */
+.hud-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.hud-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-dim);
+  transition: var(--transition-base);
+}
+
+.hud-stat:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-medium);
+}
+
+.hud-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hud-stat-icon--rank {
+  color: var(--neon-amber);
+}
+
+.hud-stat-icon--points {
+  color: var(--neon-emerald);
+}
+
+.hud-stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.hud-stat-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.hud-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.hud-stat-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--border-dim);
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .hud-header {
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .hud-stats {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hud-stat {
+    padding: 6px 10px;
+  }
+
+  .hud-stat-label {
+    font-size: 0.5rem;
+  }
+
+  .hud-stat-value {
+    font-size: 0.85rem;
+  }
+}

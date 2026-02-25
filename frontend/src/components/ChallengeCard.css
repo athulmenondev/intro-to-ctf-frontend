@@ -1,0 +1,423 @@
+/* ═══════════════════════════════════════════════════
+   Challenge Card — "Liquid Glass" + Terminal Aesthetic
+   ═══════════════════════════════════════════════════ */
+
+.challenge-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-unsolved);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  overflow: hidden;
+  animation: fadeInUp 500ms ease-out both;
+}
+
+.challenge-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
+  pointer-events: none;
+  transition: var(--transition-smooth);
+}
+
+/* Hover */
+.challenge-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-medium);
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.challenge-card:hover::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+}
+
+/* Unsolved state */
+.challenge-card--unsolved {
+  border-color: var(--border-unsolved);
+}
+
+.challenge-card--unsolved:hover {
+  border-color: color-mix(in srgb, var(--card-color) 30%, transparent);
+  box-shadow: 0 4px 24px color-mix(in srgb, var(--card-color) 8%, transparent);
+}
+
+/* Solved state */
+.challenge-card--solved {
+  border-color: var(--neon-emerald);
+  box-shadow: 0 0 8px var(--neon-emerald-glow),
+              0 0 24px rgba(0, 255, 157, 0.06);
+}
+
+.challenge-card--solved:hover {
+  animation: border-glow-pulse 2s ease-in-out infinite;
+}
+
+/* Expanded */
+.challenge-card--expanded {
+  cursor: default;
+  grid-column: 1 / -1;
+  background: var(--bg-card-hover);
+  border-color: color-mix(in srgb, var(--card-color) 40%, transparent);
+  box-shadow: 0 8px 48px color-mix(in srgb, var(--card-color) 10%, transparent);
+}
+
+/* Success flash */
+.challenge-card--success {
+  animation: glitch-success 400ms ease-in-out;
+  border-color: var(--neon-emerald) !important;
+  box-shadow: 0 0 30px var(--neon-emerald-glow-strong),
+              0 0 60px var(--neon-emerald-glow) !important;
+}
+
+/* ── Glitch scanline ── */
+.glitch-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--neon-emerald);
+  opacity: 0.6;
+  z-index: 10;
+  animation: scanline 400ms linear;
+  pointer-events: none;
+  box-shadow: 0 0 8px var(--neon-emerald), 0 0 20px var(--neon-emerald-glow);
+}
+
+/* ── Confetti ── */
+.confetti-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.confetti-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: var(--color);
+  animation: confetti-fly 800ms ease-out var(--delay) both;
+}
+
+@keyframes confetti-fly {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--x), var(--y)) rotate(var(--r)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* ── Card Header ── */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--card-color) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--card-color) 15%, transparent);
+  transition: var(--transition-base);
+}
+
+.challenge-card:hover .card-icon {
+  background: color-mix(in srgb, var(--card-color) 12%, transparent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--card-color) 15%, transparent);
+}
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* ── Difficulty Badge ── */
+.difficulty-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  padding: 3px 10px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.badge--easy {
+  background: rgba(0, 255, 157, 0.1);
+  color: var(--neon-emerald);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+}
+
+.badge--medium {
+  background: rgba(255, 184, 0, 0.1);
+  color: var(--neon-amber);
+  border: 1px solid rgba(255, 184, 0, 0.2);
+}
+
+.badge--hard {
+  background: rgba(255, 59, 92, 0.1);
+  color: var(--neon-red);
+  border: 1px solid rgba(255, 59, 92, 0.2);
+}
+
+/* ── Status ── */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.status--unsolved {
+  color: var(--text-muted);
+}
+
+.status--solved {
+  color: var(--neon-emerald);
+  text-shadow: 0 0 8px var(--neon-emerald-glow);
+}
+
+/* ── Card Body ── */
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  transition: var(--transition-base);
+}
+
+.challenge-card:hover .card-title {
+  color: #ffffff;
+}
+
+.card-category {
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.card-points {
+  margin-top: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.points-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.points-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+/* ── Expanded Content ── */
+.card-expanded {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-dim);
+  animation: fadeIn 300ms ease-out;
+}
+
+.card-description {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  white-space: pre-line;
+}
+
+.card-hint {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  background: rgba(255, 184, 0, 0.04);
+  border: 1px solid rgba(255, 184, 0, 0.12);
+  border-radius: var(--radius-sm);
+  margin-bottom: 18px;
+  align-items: flex-start;
+}
+
+.hint-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--neon-amber);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hint-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Flag Form ── */
+.flag-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.flag-form--shake {
+  animation: shake 400ms ease-in-out;
+}
+
+.flag-input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-base);
+}
+
+.flag-input-wrapper:focus-within {
+  border-color: var(--neon-emerald-dim);
+  box-shadow: 0 0 0 3px var(--neon-emerald-glow),
+              0 0 16px var(--neon-emerald-glow);
+}
+
+.flag-prompt {
+  color: var(--neon-emerald);
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.flag-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+.flag-input::placeholder {
+  color: var(--text-muted);
+}
+
+.flag-input:disabled {
+  color: var(--neon-emerald);
+  opacity: 0.7;
+}
+
+.flag-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  background: transparent;
+  color: var(--neon-emerald);
+  border: 1px solid var(--neon-emerald-dim);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.flag-submit:hover {
+  background: rgba(0, 255, 157, 0.08);
+  box-shadow: 0 0 12px var(--neon-emerald-glow),
+              0 0 30px rgba(0, 255, 157, 0.08);
+  border-color: var(--neon-emerald);
+  color: #ffffff;
+}
+
+.flag-submit:active {
+  transform: scale(0.97);
+}
+
+/* ── Close Button ── */
+.card-close {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  background: none;
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-align: center;
+}
+
+.card-close:hover {
+  border-color: var(--border-medium);
+  color: var(--text-secondary);
+  background: var(--bg-glass);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .challenge-card--expanded {
+    grid-column: 1 / -1;
+  }
+
+  .flag-form {
+    flex-direction: column;
+  }
+
+  .flag-submit {
+    width: 100%;
+  }
+}

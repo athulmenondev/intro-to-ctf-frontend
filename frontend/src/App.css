@@ -1,0 +1,164 @@
+/* ═══════════════════════════════════════════════════
+   App Layout — Dashboard
+   ═══════════════════════════════════════════════════ */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Dashboard ── */
+.dashboard {
+  flex: 1;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 32px;
+}
+
+/* ── Progress Section ── */
+.dashboard-progress {
+  margin-bottom: 32px;
+  padding: 20px 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  animation: fadeInUp 400ms ease-out both;
+}
+
+/* ── Layout ── */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ── Challenge Section ── */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.06em;
+}
+
+.section-bracket {
+  color: var(--neon-emerald);
+  margin-right: 8px;
+  opacity: 0.7;
+}
+
+.section-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+/* ── Grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+/* ── Footer ── */
+.app-footer {
+  margin-top: auto;
+  padding: 20px 32px;
+  border-top: 1px solid var(--border-dim);
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.footer-bracket {
+  color: var(--neon-emerald);
+  opacity: 0.5;
+}
+
+.footer-separator {
+  color: var(--text-muted);
+  opacity: 0.3;
+}
+
+.footer-decoration {
+  margin-top: 12px;
+  height: 1px;
+  max-width: 200px;
+  margin-left: auto;
+  margin-right: auto;
+  background: linear-gradient(90deg, transparent, var(--neon-emerald-glow), transparent);
+}
+
+/* ═══════════════════════════════════════════════════
+   Responsive Breakpoints
+   ═══════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard {
+    padding: 20px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 16px 14px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .dashboard-progress {
+    padding: 16px 18px;
+    margin-bottom: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 12px 10px;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .footer-separator {
+    display: none;
+  }
+}
