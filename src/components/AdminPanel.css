@@ -524,6 +524,45 @@
   grid-template-columns: 60px 1fr 80px 80px;
 }
 
+/* ── Participants table ── */
+.admin-table-header--participants,
+.admin-table-row--participants {
+  grid-template-columns: 50px 120px 1fr 65px 60px 60px 60px 100px !important;
+}
+
+.admin-col--p-rank { text-align: center; }
+.admin-col--p-user { font-weight: 600; }
+.admin-col--p-email {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.admin-col--p-pts { text-align: right; }
+.admin-col--p-solves { text-align: center; }
+.admin-col--p-subs { text-align: center; color: var(--text-muted); }
+.admin-col--p-acc { text-align: center; }
+.admin-col--p-joined {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.admin-pts-value {
+  color: var(--neon-emerald);
+  font-weight: 700;
+}
+
+.admin-accuracy {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.admin-accuracy--good {
+  color: var(--neon-emerald);
+}
+
+.admin-accuracy--mid {
+  color: #ffb800;
+}
+
 /* ═══════════════════════════════════════════════════
    Responsive
    ═══════════════════════════════════════════════════ */
@@ -537,6 +576,11 @@
   .admin-table-row {
     grid-template-columns: 80px 1fr 60px 60px 50px 50px 130px 90px;
     font-size: 0.7rem;
+  }
+
+  .admin-table-header--participants,
+  .admin-table-row--participants {
+    grid-template-columns: 40px 100px 1fr 55px 50px 50px 55px 85px !important;
   }
 }
 
@@ -568,6 +612,11 @@
   .admin-table-row {
     min-width: 700px;
   }
+
+  .admin-table-header--participants,
+  .admin-table-row--participants {
+    min-width: 650px !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -579,3 +628,4 @@
     flex-wrap: wrap;
   }
 }
+

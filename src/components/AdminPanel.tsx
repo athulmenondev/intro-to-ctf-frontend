@@ -1,10 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import './AdminPanel.css';
 import { adminAPI, leaderboardAPI } from '../api';
-import type { AdminChallenge } from '../api';
+import type { AdminChallenge, Participant } from '../api';
 import type { LeaderboardEntry } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { TrophyIcon, TerminalIcon } from './Icons';
+
+/** Formats an ISO date string into a human-friendly relative label */
+function formatRelativeDate(iso: string): string {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 const CATEGORIES = ['OSINT', 'Crypto', 'Web', 'Forensics', 'Reverse'] as const;
 const DIFFICULTIES = ['Easy', 'Medium', 'Hard'] as const;
@@ -31,9 +45,10 @@ export function AdminPanel() {
   const { user, logout } = useAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<'challenges' | 'leaderboard'>('challenges');
+  const [activeTab, setActiveTab] = useState<'challenges' | 'leaderboard' | 'participants'>('challenges');
   const [challenges, setChallenges] = useState<AdminChallenge[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +66,16 @@ export function AdminPanel() {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [challengeRes, statsRes, leaderboardRes] = await Promise.all([
+      const [challengeRes, statsRes, leaderboardRes, participantRes] = await Promise.all([
         adminAPI.getChallenges(),
         adminAPI.getStats(),
         leaderboardAPI.get(25),
+        adminAPI.getParticipants(),
       ]);
       setChallenges(challengeRes.challenges);
       setStats(statsRes);
       setLeaderboard(leaderboardRes.leaderboard);
+      setParticipants(participantRes.participants);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load data';
@@ -225,6 +242,12 @@ export function AdminPanel() {
             onClick={() => setActiveTab('leaderboard')}
           >
             // LEADERBOARD
+          </button>
+          <button
+            className={`admin-tab mono ${activeTab === 'participants' ? 'admin-tab--active' : ''}`}
+            onClick={() => setActiveTab('participants')}
+          >
+            // PARTICIPANTS
           </button>
         </div>
 
@@ -471,6 +494,56 @@ export function AdminPanel() {
               ))}
               {leaderboard.length === 0 && (
                 <div className="admin-empty mono">No players yet.</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Participants Tab */}
+        {activeTab === 'participants' && (
+          <div className="admin-section">
+            <div className="admin-section-header">
+              <h2 className="admin-section-title mono">
+                <span className="admin-bracket">//</span> Registered Participants ({participants.length})
+              </h2>
+              <button className="admin-btn admin-btn--ghost mono" onClick={fetchData}>
+                ↻ REFRESH
+              </button>
+            </div>
+
+            <div className="admin-table admin-table--participants">
+              <div className="admin-table-header admin-table-header--participants">
+                <span className="admin-col admin-col--p-rank">#</span>
+                <span className="admin-col admin-col--p-user">USERNAME</span>
+                <span className="admin-col admin-col--p-email">EMAIL</span>
+                <span className="admin-col admin-col--p-pts">PTS</span>
+                <span className="admin-col admin-col--p-solves">SOLVES</span>
+                <span className="admin-col admin-col--p-subs">SUBS</span>
+                <span className="admin-col admin-col--p-acc">ACC%</span>
+                <span className="admin-col admin-col--p-joined">JOINED</span>
+              </div>
+              {participants.map((p) => (
+                <div key={p.id} className={`admin-table-row admin-table-row--participants ${p.rank <= 3 ? 'admin-table-row--top' : ''}`}>
+                  <span className="admin-col admin-col--p-rank mono">
+                    {p.rank <= 3 ? ['🥇', '🥈', '🥉'][p.rank - 1] : `#${p.rank}`}
+                  </span>
+                  <span className="admin-col admin-col--p-user mono">{p.username}</span>
+                  <span className="admin-col admin-col--p-email">{p.email}</span>
+                  <span className="admin-col admin-col--p-pts mono">
+                    <span className="admin-pts-value">{p.points}</span>
+                  </span>
+                  <span className="admin-col admin-col--p-solves mono">{p.solveCount}</span>
+                  <span className="admin-col admin-col--p-subs mono">{p.submissionCount}</span>
+                  <span className="admin-col admin-col--p-acc mono">
+                    <span className={`admin-accuracy ${p.accuracy >= 50 ? 'admin-accuracy--good' : p.accuracy > 0 ? 'admin-accuracy--mid' : ''}`}>
+                      {p.accuracy}%
+                    </span>
+                  </span>
+                  <span className="admin-col admin-col--p-joined">{formatRelativeDate(p.joinedAt)}</span>
+                </div>
+              ))}
+              {participants.length === 0 && (
+                <div className="admin-empty mono">No participants registered yet.</div>
               )}
             </div>
           </div>

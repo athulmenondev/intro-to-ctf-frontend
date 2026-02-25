@@ -199,5 +199,27 @@ export const adminAPI = {
     apiFetch<{ message: string }>(`/admin/challenges/${id}`, {
       method: 'DELETE',
     }),
+
+  getParticipants: (): Promise<ParticipantsResponse> =>
+    apiFetch<ParticipantsResponse>('/admin/participants'),
 };
 
+// ─── Participant Types ─────────────────────────────────────
+
+export interface Participant {
+  id: number;
+  rank: number;
+  username: string;
+  email: string;
+  points: number;
+  solveCount: number;
+  submissionCount: number;
+  accuracy: number;
+  joinedAt: string;
+  lastActive: string;
+}
+
+interface ParticipantsResponse {
+  participants: Participant[];
+  totalParticipants: number;
+}
