@@ -1,4 +1,4 @@
-const API_BASE = 'https://intro-to-ctf-backend.onrender.com';
+const API_BASE = 'https://intro-to-ctf-backend.onrender.com/api';
 
 /**
  * Gets the stored JWT token from localStorage.
