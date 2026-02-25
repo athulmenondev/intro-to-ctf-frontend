@@ -4,9 +4,11 @@ import type { UserStats } from '../types';
 
 interface HUDHeaderProps {
   stats: UserStats;
+  username?: string;
+  onLogout?: () => void;
 }
 
-export function HUDHeader({ stats }: HUDHeaderProps) {
+export function HUDHeader({ stats, username, onLogout }: HUDHeaderProps) {
   return (
     <header className="hud-header" id="hud-header">
       {/* Left: Branding */}
@@ -23,8 +25,26 @@ export function HUDHeader({ stats }: HUDHeaderProps) {
         </div>
       </div>
 
-      {/* Right: Stats */}
+      {/* Right: Stats + User */}
       <div className="hud-stats">
+        {username && (
+          <>
+            <div className="hud-user" id="user-info">
+              <span className="hud-user-name mono">{username}</span>
+              {onLogout && (
+                <button
+                  className="hud-logout mono"
+                  onClick={onLogout}
+                  id="logout-btn"
+                  title="Logout"
+                >
+                  [×]
+                </button>
+              )}
+            </div>
+            <div className="hud-stat-divider" />
+          </>
+        )}
         <div className="hud-stat" id="user-rank">
           <div className="hud-stat-icon hud-stat-icon--rank">
             <ShieldIcon size={16} />

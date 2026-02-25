@@ -9,6 +9,8 @@ interface LeaderboardProps {
 
 const rankColors = ['#ffb800', '#c0c0c0', '#cd7f32', '#00b4ff', '#a855f7'];
 
+const rankAvatars = ['👾', '🦊', '🐉', '🤖', '🎮', '💀', '🧠', '🔮', '⚡', '🕹️'];
+
 export function Leaderboard({ entries, userPoints }: LeaderboardProps) {
   return (
     <aside className="leaderboard" id="leaderboard">
@@ -20,28 +22,32 @@ export function Leaderboard({ entries, userPoints }: LeaderboardProps) {
       </div>
 
       <div className="leaderboard-list">
-        {entries.map((entry, index) => (
-          <div
-            key={entry.rank}
-            className={`lb-entry ${index === 0 ? 'lb-entry--first' : ''}`}
-            style={{
-              animationDelay: `${(index + 1) * 100}ms`,
-            }}
-          >
+        {entries.length === 0 ? (
+          <div className="lb-empty mono">No players yet. Be the first!</div>
+        ) : (
+          entries.map((entry, index) => (
             <div
-              className="lb-rank mono"
-              style={{ color: rankColors[index] || 'var(--text-muted)' }}
+              key={entry.rank}
+              className={`lb-entry ${index === 0 ? 'lb-entry--first' : ''}`}
+              style={{
+                animationDelay: `${(index + 1) * 100}ms`,
+              }}
             >
-              {entry.rank}
+              <div
+                className="lb-rank mono"
+                style={{ color: rankColors[index] || 'var(--text-muted)' }}
+              >
+                {entry.rank}
+              </div>
+              <div className="lb-avatar">{rankAvatars[index % rankAvatars.length]}</div>
+              <div className="lb-info">
+                <span className="lb-name mono">{entry.username}</span>
+                <span className="lb-solved">{entry.solvedCount} solved</span>
+              </div>
+              <div className="lb-points mono">{entry.points}</div>
             </div>
-            <div className="lb-avatar">{entry.avatar}</div>
-            <div className="lb-info">
-              <span className="lb-name mono">{entry.name}</span>
-              <span className="lb-solved">{entry.solved} solved</span>
-            </div>
-            <div className="lb-points mono">{entry.points}</div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* User position indicator */}

@@ -1,12 +1,13 @@
 import { useState, useRef } from 'react';
 import './ChallengeCard.css';
 import { CategoryIcon, CheckIcon } from './Icons';
+import { challengeAPI } from '../api';
 import type { Challenge, ChallengeCategory } from '../types';
 
 interface ChallengeCardProps {
   challenge: Challenge;
   index: number;
-  onSolve: (id: string) => void;
+  onSolve: (id: string, pointsAwarded: number) => void;
 }
 
 const categoryColors: Record<ChallengeCategory, string> = {
@@ -29,28 +30,54 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
   const [shaking, setShaking] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const color = categoryColors[challenge.category];
   const diff = difficultyConfig[challenge.difficulty];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (challenge.solved) return;
+    if (challenge.solved || isSubmitting || !flagInput.trim()) return;
 
-    if (flagInput.trim() === challenge.flag) {
-      // Success!
-      setShowSuccess(true);
-      setShowConfetti(true);
-      onSolve(challenge.id);
-      setTimeout(() => setShowSuccess(false), 1200);
-      setTimeout(() => setShowConfetti(false), 1500);
-    } else {
-      // Failure — shake animation
-      setShaking(true);
-      setTimeout(() => setShaking(false), 500);
-      setFlagInput('');
-      inputRef.current?.focus();
+    setIsSubmitting(true);
+    setSubmitMessage(null);
+    setSubmitError(false);
+
+    try {
+      const result = await challengeAPI.submitFlag(challenge.id, flagInput.trim());
+
+      if (result.correct && !result.alreadySolved) {
+        // Success!
+        setShowSuccess(true);
+        setShowConfetti(true);
+        setSubmitMessage(result.message);
+        onSolve(challenge.id, result.pointsAwarded ?? 0);
+        setTimeout(() => setShowSuccess(false), 1200);
+        setTimeout(() => setShowConfetti(false), 1500);
+      } else if (result.alreadySolved) {
+        setSubmitMessage(result.message);
+      } else {
+        // Incorrect flag
+        setShaking(true);
+        setSubmitError(true);
+        setSubmitMessage(
+          result.attemptsRemaining !== undefined
+            ? `${result.message} (${result.attemptsRemaining} attempts left)`
+            : result.message
+        );
+        setTimeout(() => setShaking(false), 500);
+        setFlagInput('');
+        inputRef.current?.focus();
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Submission failed';
+      setSubmitMessage(message);
+      setSubmitError(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -63,6 +90,8 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
     setExpanded(false);
+    setSubmitMessage(null);
+    setSubmitError(false);
   };
 
   return (
@@ -129,6 +158,11 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
           <span className="points-value">{challenge.points}</span>
           <span className="points-label">PTS</span>
         </div>
+        {challenge.totalSolves > 0 && (
+          <div className="card-solves mono">
+            {challenge.totalSolves} solve{challenge.totalSolves !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
 
       {/* Expanded Content */}
@@ -140,6 +174,13 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
             <div className="card-hint">
               <span className="hint-label mono">&gt; HINT:</span>
               <span className="hint-text">{challenge.hint}</span>
+            </div>
+          )}
+
+          {/* Submission feedback */}
+          {submitMessage && (
+            <div className={`submit-feedback ${submitError ? 'submit-feedback--error' : 'submit-feedback--success'}`}>
+              {submitMessage}
             </div>
           )}
 
@@ -155,17 +196,22 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
                 type="text"
                 className="flag-input mono"
                 placeholder={challenge.solved ? 'Challenge completed!' : 'CTF{enter_flag_here}'}
-                value={challenge.solved ? challenge.flag : flagInput}
+                value={flagInput}
                 onChange={(e) => setFlagInput(e.target.value)}
-                disabled={challenge.solved}
+                disabled={challenge.solved || isSubmitting}
                 id={`flag-input-${challenge.id}`}
                 autoComplete="off"
                 spellCheck={false}
               />
             </div>
             {!challenge.solved && (
-              <button type="submit" className="flag-submit mono" id={`submit-${challenge.id}`}>
-                Submit
+              <button
+                type="submit"
+                className="flag-submit mono"
+                id={`submit-${challenge.id}`}
+                disabled={isSubmitting || !flagInput.trim()}
+              >
+                {isSubmitting ? '...' : 'Submit'}
               </button>
             )}
           </form>

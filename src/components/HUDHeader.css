@@ -123,6 +123,39 @@
   background: var(--border-dim);
 }
 
+/* ── User Info ── */
+.hud-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-dim);
+}
+
+.hud-user-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--neon-cyan);
+  letter-spacing: 0.03em;
+}
+
+.hud-logout {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.2s ease;
+  line-height: 1;
+}
+
+.hud-logout:hover {
+  color: #ff3b5c;
+}
+
 /* ── Responsive ── */
 @media (max-width: 640px) {
   .hud-header {

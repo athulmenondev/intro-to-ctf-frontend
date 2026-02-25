@@ -385,6 +385,48 @@
   transform: scale(0.97);
 }
 
+.flag-submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.flag-submit:disabled:hover {
+  background: transparent;
+  box-shadow: none;
+  border-color: var(--neon-emerald-dim);
+  color: var(--neon-emerald);
+}
+
+/* ── Submit Feedback ── */
+.submit-feedback {
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  margin-bottom: 12px;
+  animation: fadeInUp 200ms ease-out;
+}
+
+.submit-feedback--success {
+  background: rgba(0, 255, 157, 0.08);
+  border: 1px solid rgba(0, 255, 157, 0.2);
+  color: var(--neon-emerald);
+}
+
+.submit-feedback--error {
+  background: rgba(255, 59, 92, 0.08);
+  border: 1px solid rgba(255, 59, 92, 0.2);
+  color: #ff3b5c;
+}
+
+/* ── Solve Count ── */
+.card-solves {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
 /* ── Close Button ── */
 .card-close {
   display: block;
@@ -405,6 +447,15 @@
   border-color: var(--border-medium);
   color: var(--text-secondary);
   background: var(--bg-glass);
+}
+
+/* ── Leaderboard Empty ── */
+.lb-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
 }
 
 /* ── Responsive ── */
