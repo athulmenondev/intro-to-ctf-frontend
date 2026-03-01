@@ -63,6 +63,7 @@ export function AdminPanel() {
 
   // Confirm delete
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteParticipantId, setDeleteParticipantId] = useState<string | null>(null);
 
   // Reset CTF confirm
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -192,6 +193,19 @@ export function AdminPanel() {
       await adminAPI.deleteChallenge(id);
       setSuccessMessage('Challenge deleted!');
       setDeleteConfirmId(null);
+      await fetchData();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      setError(message);
+    }
+  };
+
+  const handleDeleteParticipant = async (id: string) => {
+    try {
+      setError(null);
+      await adminAPI.deleteParticipant(id);
+      setSuccessMessage('Participant deleted!');
+      setDeleteParticipantId(null);
       await fetchData();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Delete failed';
@@ -720,6 +734,7 @@ export function AdminPanel() {
                 <span className="admin-col admin-col--p-subs">SUBS</span>
                 <span className="admin-col admin-col--p-acc">ACC%</span>
                 <span className="admin-col admin-col--p-joined">JOINED</span>
+                <span className="admin-col admin-col--p-actions">ACTIONS</span>
               </div>
               {participants.map((p) => (
                 <div key={p.id} className={`admin-table-row admin-table-row--participants ${p.rank <= 3 ? 'admin-table-row--top' : ''}`}>
@@ -739,6 +754,31 @@ export function AdminPanel() {
                     </span>
                   </span>
                   <span className="admin-col admin-col--p-joined">{formatRelativeDate(p.joinedAt)}</span>
+                  <span className="admin-col admin-col--p-actions">
+                    {deleteParticipantId === p.id ? (
+                      <span className="admin-delete-confirm">
+                        <button
+                          className="admin-btn admin-btn--danger-sm mono"
+                          onClick={() => handleDeleteParticipant(p.id)}
+                        >
+                          YES
+                        </button>
+                        <button
+                          className="admin-btn admin-btn--ghost-sm mono"
+                          onClick={() => setDeleteParticipantId(null)}
+                        >
+                          NO
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        className="admin-btn admin-btn--danger-sm mono"
+                        onClick={() => setDeleteParticipantId(p.id)}
+                      >
+                        DEL
+                      </button>
+                    )}
+                  </span>
                 </div>
               ))}
               {participants.length === 0 && (

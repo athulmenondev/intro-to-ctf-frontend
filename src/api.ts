@@ -207,6 +207,12 @@ export const adminAPI = {
   getParticipants: (): Promise<ParticipantsResponse> =>
     apiFetch<ParticipantsResponse>('/admin/participants'),
 
+  /** Delete a participant */
+  deleteParticipant: (id: string): Promise<{ message: string }> =>
+    apiFetch<{ message: string }>(`/admin/participants/${id}`, {
+      method: 'DELETE',
+    }),
+
   /** Export current challenges as JSON (triggers file download) */
   exportSeed: async (): Promise<void> => {
     const token = getToken();
