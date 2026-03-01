@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './AdminPanel.css';
-import { adminAPI, leaderboardAPI } from '../api';
-import type { AdminChallenge, Participant } from '../api';
+import { adminAPI, leaderboardAPI, attachmentAPI } from '../api';
+import type { AdminChallenge, Participant, Attachment } from '../api';
 import type { LeaderboardEntry } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { TrophyIcon, TerminalIcon } from './Icons';
@@ -59,9 +59,18 @@ export function AdminPanel() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formFiles, setFormFiles] = useState<File[]>([]);
 
   // Confirm delete
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Reset CTF confirm
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+
+  // Attachment uploads
+  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [challengeAttachments, setChallengeAttachments] = useState<Record<string, Attachment[]>>({});
 
   const fetchData = useCallback(async () => {
     try {
@@ -76,6 +85,26 @@ export function AdminPanel() {
       setStats(statsRes);
       setLeaderboard(leaderboardRes.leaderboard);
       setParticipants(participantRes.participants);
+
+      // Fetch attachments for all challenges
+      const attachMap: Record<string, Attachment[]> = {};
+      const attResults = await Promise.allSettled(
+        challengeRes.challenges.map(async (c) => {
+          try {
+            const res = await attachmentAPI.list(c.id);
+            return { id: c.id, attachments: res.attachments };
+          } catch {
+            return { id: c.id, attachments: [] as Attachment[] };
+          }
+        })
+      );
+      for (const r of attResults) {
+        if (r.status === 'fulfilled') {
+          attachMap[r.value.id] = r.value.attachments;
+        }
+      }
+      setChallengeAttachments(attachMap);
+
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load data';
@@ -99,6 +128,7 @@ export function AdminPanel() {
 
   const handleCreateNew = () => {
     setFormData(emptyForm);
+    setFormFiles([]);
     setIsEditing(false);
     setShowForm(true);
     setError(null);
@@ -115,6 +145,7 @@ export function AdminPanel() {
       flag: challenge.flag,
       points: challenge.points,
     });
+    setFormFiles([]);
     setIsEditing(true);
     setShowForm(true);
     setError(null);
@@ -129,13 +160,23 @@ export function AdminPanel() {
       if (isEditing) {
         const { id, ...updateData } = formData;
         await adminAPI.updateChallenge(id, updateData);
+        // Upload any new files for existing challenge
+        for (const file of formFiles) {
+          await adminAPI.uploadAttachment(formData.id, file);
+        }
         setSuccessMessage(`Challenge "${formData.title}" updated!`);
       } else {
         await adminAPI.createChallenge(formData);
-        setSuccessMessage(`Challenge "${formData.title}" created!`);
+        // Upload queued files after creation
+        for (const file of formFiles) {
+          await adminAPI.uploadAttachment(formData.id, file);
+        }
+        const fileMsg = formFiles.length > 0 ? ` with ${formFiles.length} file(s)` : '';
+        setSuccessMessage(`Challenge "${formData.title}" created${fileMsg}!`);
       }
       setShowForm(false);
       setFormData(emptyForm);
+      setFormFiles([]);
       await fetchData();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Operation failed';
@@ -155,6 +196,52 @@ export function AdminPanel() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Delete failed';
       setError(message);
+    }
+  };
+
+  const handleExportSeed = async () => {
+    try {
+      await adminAPI.exportSeed();
+      setSuccessMessage('challenges.json downloaded! Place it in your backend root and redeploy.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export failed');
+    }
+  };
+
+  const handleClearQuestions = async () => {
+    if (resetConfirmText !== 'CLEAR') return;
+    try {
+      const result = await adminAPI.clearAllQuestions();
+      setSuccessMessage(
+        `All questions cleared! Deleted ${result.deleted.challengesDeleted} challenges.`
+      );
+      setShowResetConfirm(false);
+      setResetConfirmText('');
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Clear failed');
+    }
+  };
+
+  const handleUploadFile = async (challengeId: string, file: File) => {
+    try {
+      setError(null);
+      await adminAPI.uploadAttachment(challengeId, file);
+      setSuccessMessage(`File "${file.name}" uploaded!`);
+      setUploadingFor(null);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed');
+    }
+  };
+
+  const handleDeleteAttachment = async (challengeId: string, filename: string) => {
+    try {
+      await adminAPI.deleteAttachment(challengeId, filename);
+      setSuccessMessage('Attachment deleted!');
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Delete failed');
     }
   };
 
@@ -258,10 +345,45 @@ export function AdminPanel() {
               <h2 className="admin-section-title mono">
                 <span className="admin-bracket">//</span> All Challenges ({challenges.length})
               </h2>
-              <button className="admin-btn admin-btn--primary mono" onClick={handleCreateNew} id="create-challenge-btn">
-                + NEW CHALLENGE
-              </button>
+              <div className="admin-section-actions">
+                <button className="admin-btn admin-btn--ghost mono" onClick={handleExportSeed} title="Download challenges.json for redeployment">
+                  ↓ EXPORT SEED
+                </button>
+                <button className="admin-btn admin-btn--danger-outline mono" onClick={() => setShowResetConfirm(true)} title="Clear all questions from database">
+                  ⚠ CLEAR QUESTIONS
+                </button>
+                <button className="admin-btn admin-btn--primary mono" onClick={handleCreateNew} id="create-challenge-btn">
+                  + NEW CHALLENGE
+                </button>
+              </div>
             </div>
+
+            {/* Reset CTF Confirm */}
+            {showResetConfirm && (
+              <div className="admin-message admin-message--error" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
+                <span>⚠ This will delete ALL challenges permanently.</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="mono" style={{ fontSize: '0.72rem' }}>Type CLEAR to confirm:</span>
+                  <input
+                    className="admin-input mono"
+                    style={{ width: 100, padding: '4px 8px', fontSize: '0.75rem' }}
+                    value={resetConfirmText}
+                    onChange={(e) => setResetConfirmText(e.target.value.toUpperCase())}
+                    placeholder="CLEAR"
+                  />
+                  <button
+                    className="admin-btn admin-btn--danger-sm mono"
+                    onClick={handleClearQuestions}
+                    disabled={resetConfirmText !== 'CLEAR'}
+                  >
+                    CONFIRM CLEAR
+                  </button>
+                  <button className="admin-btn admin-btn--ghost-sm mono" onClick={() => { setShowResetConfirm(false); setResetConfirmText(''); }}>
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Create / Edit Form */}
             {showForm && (
@@ -375,6 +497,44 @@ export function AdminPanel() {
                   />
                 </div>
 
+                {/* File Attachments */}
+                <div className="admin-field">
+                  <label className="admin-label mono">📎 ATTACHMENTS (optional)</label>
+                  <div className="admin-file-zone">
+                    {formFiles.length > 0 && (
+                      <div className="admin-file-list">
+                        {formFiles.map((f, i) => (
+                          <span key={i} className="admin-file-chip">
+                            <span className="mono" style={{ fontSize: '0.72rem' }}>📄 {f.name}</span>
+                            <span className="mono" style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>({(f.size / 1024).toFixed(0)}KB)</span>
+                            <button
+                              type="button"
+                              className="admin-file-remove"
+                              onClick={() => setFormFiles(formFiles.filter((_, idx) => idx !== i))}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <label className="admin-file-picker mono">
+                      + Choose Files (PDF, Images, ZIP, Code — max 5MB each)
+                      <input
+                        type="file"
+                        multiple
+                        style={{ display: 'none' }}
+                        accept=".pdf,.png,.jpg,.jpeg,.gif,.txt,.zip,.tar.gz,.py,.c,.js,.html,.md"
+                        onChange={(e) => {
+                          const newFiles = Array.from(e.target.files || []);
+                          setFormFiles(prev => [...prev, ...newFiles]);
+                          e.target.value = ''; // reset so same file can be re-added
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
                 <div className="admin-form-actions">
                   <button type="submit" className="admin-btn admin-btn--primary mono" disabled={isSubmitting}>
                     {isSubmitting ? 'SAVING...' : isEditing ? '[ SAVE CHANGES ]' : '[ CREATE CHALLENGE ]'}
@@ -382,7 +542,7 @@ export function AdminPanel() {
                   <button
                     type="button"
                     className="admin-btn admin-btn--ghost mono"
-                    onClick={() => { setShowForm(false); setError(null); }}
+                    onClick={() => { setShowForm(false); setFormFiles([]); setError(null); }}
                   >
                     [ CANCEL ]
                   </button>
@@ -445,6 +605,13 @@ export function AdminPanel() {
                           EDIT
                         </button>
                         <button
+                          className="admin-btn admin-btn--ghost-sm mono"
+                          onClick={() => setUploadingFor(uploadingFor === c.id ? null : c.id)}
+                          title="Upload attachment"
+                        >
+                          📎
+                        </button>
+                        <button
                           className="admin-btn admin-btn--danger-sm mono"
                           onClick={() => setDeleteConfirmId(c.id)}
                         >
@@ -453,6 +620,38 @@ export function AdminPanel() {
                       </>
                     )}
                   </span>
+
+                  {/* Attachments row */}
+                  {((challengeAttachments[c.id] && challengeAttachments[c.id].length > 0) || uploadingFor === c.id) && (
+                    <div className="admin-attachments-row" style={{ gridColumn: '1 / -1', paddingTop: 6 }}>
+                      {challengeAttachments[c.id]?.map((att) => (
+                        <span key={att.filename} className="admin-attachment-chip">
+                          <span className="mono" style={{ fontSize: '0.68rem' }}>📄 {att.originalName}</span>
+                          <button
+                            className="admin-attachment-delete"
+                            onClick={() => handleDeleteAttachment(c.id, att.filename)}
+                            title="Delete attachment"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                      {uploadingFor === c.id && (
+                        <label className="admin-upload-chip mono">
+                          + Upload File
+                          <input
+                            type="file"
+                            style={{ display: 'none' }}
+                            accept=".pdf,.png,.jpg,.jpeg,.gif,.txt,.zip,.py,.c,.js"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleUploadFile(c.id, file);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               {challenges.length === 0 && (

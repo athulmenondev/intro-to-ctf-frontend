@@ -1,4 +1,4 @@
-const API_BASE = 'https://intro-to-ctf-backend.onrender.com/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 /**
  * Gets the stored JWT token from localStorage.
@@ -42,6 +42,10 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
   const data = await res.json();
 
   if (!res.ok) {
+    if (res.status === 401 && !endpoint.startsWith('/auth/')) {
+      clearToken();
+      window.dispatchEvent(new Event('auth:expired'));
+    }
     const error = new Error(data.message || 'API request failed');
     (error as Error & { statusCode: number }).statusCode = res.status;
     throw error;
@@ -55,7 +59,7 @@ async function apiFetch<T>(endpoint: string, options: RequestInit = {}): Promise
 interface AuthResponse {
   message: string;
   token: string;
-  user: { id: number; username: string; email: string; points?: number; isAdmin?: boolean };
+  user: { id: string; username: string; email: string; points?: number; isAdmin?: boolean };
 }
 
 export const authAPI = {
@@ -104,7 +108,7 @@ export const challengeAPI = {
 // ─── User API ──────────────────────────────────────────────
 
 interface UserProfile {
-  id: number;
+  id: string;
   username: string;
   email: string;
   points: number;
@@ -202,12 +206,65 @@ export const adminAPI = {
 
   getParticipants: (): Promise<ParticipantsResponse> =>
     apiFetch<ParticipantsResponse>('/admin/participants'),
+
+  /** Export current challenges as JSON (triggers file download) */
+  exportSeed: async (): Promise<void> => {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/admin/export-seed`, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || 'Export failed');
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'challenges.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  /** Clear All Questions */
+  clearAllQuestions: (): Promise<{ message: string; deleted: { challengesDeleted: number } }> =>
+    apiFetch('/admin/clear-questions', { method: 'POST' }),
+
+  /** Upload a file attachment for a challenge */
+  uploadAttachment: async (challengeId: string, file: File): Promise<{ message: string; attachment: Attachment }> => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/admin/challenges/${challengeId}/attachments`, {
+      method: 'POST',
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Upload failed');
+    return data;
+  },
+
+  /** Delete a file attachment */
+  deleteAttachment: (challengeId: string, filename: string): Promise<{ message: string }> =>
+    apiFetch(`/admin/challenges/${challengeId}/attachments/${filename}`, { method: 'DELETE' }),
 };
+
+// ─── Attachment Types ──────────────────────────────────────
+
+export interface Attachment {
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  url?: string;
+  size?: number;
+}
 
 // ─── Participant Types ─────────────────────────────────────
 
 export interface Participant {
-  id: number;
+  id: string;
   rank: number;
   username: string;
   email: string;
@@ -223,3 +280,16 @@ interface ParticipantsResponse {
   participants: Participant[];
   totalParticipants: number;
 }
+
+// ─── Challenge Attachment API (public, for players) ────────
+
+export const attachmentAPI = {
+  /** List attachments for a challenge */
+  list: (challengeId: string): Promise<{ attachments: Attachment[] }> =>
+    apiFetch(`/challenges/${challengeId}/attachments`),
+
+  /** Get the full URL for an attachment */
+  getUrl: (challengeId: string, filename: string): string =>
+    `${API_BASE}/challenges/${challengeId}/attachments/${filename}`,
+};
+

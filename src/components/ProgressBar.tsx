@@ -29,7 +29,7 @@ export function ProgressBar({ solved, total }: ProgressBarProps) {
           {percentage > 0 && <div className="progress-glow" />}
         </div>
         {/* Segment markers */}
-        {Array.from({ length: total - 1 }, (_, i) => (
+        {Array.from({ length: Math.max(0, total - 1) }, (_, i) => (
           <div
             key={i}
             className="progress-segment"

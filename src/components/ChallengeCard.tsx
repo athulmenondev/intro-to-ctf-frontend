@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './ChallengeCard.css';
 import { CategoryIcon, CheckIcon } from './Icons';
-import { challengeAPI } from '../api';
+import { challengeAPI, attachmentAPI } from '../api';
+import type { Attachment } from '../api';
 import type { Challenge, ChallengeCategory } from '../types';
 
 interface ChallengeCardProps {
@@ -24,6 +25,14 @@ const difficultyConfig = {
   Hard: { label: 'HARD', className: 'badge--hard' },
 };
 
+function getFileIcon(mimeType: string): string {
+  if (mimeType.startsWith('image/')) return '🖼️';
+  if (mimeType === 'application/pdf') return '📕';
+  if (mimeType.includes('zip') || mimeType.includes('tar')) return '📦';
+  if (mimeType.startsWith('text/')) return '📝';
+  return '📄';
+}
+
 export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [flagInput, setFlagInput] = useState('');
@@ -33,10 +42,20 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState(false);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const color = categoryColors[challenge.category];
   const diff = difficultyConfig[challenge.difficulty];
+
+  // Fetch attachments when expanded
+  useEffect(() => {
+    if (expanded) {
+      attachmentAPI.list(challenge.id).then(res => {
+        setAttachments(res.attachments);
+      }).catch(() => {});
+    }
+  }, [expanded, challenge.id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +189,26 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
         <div className="card-expanded" onClick={(e) => e.stopPropagation()}>
           <p className="card-description">{challenge.description}</p>
 
+          {/* Attachments */}
+          {attachments.length > 0 && (
+            <div className="card-attachments">
+              <span className="attachment-label mono">&gt; ATTACHMENTS:</span>
+              <div className="attachment-list">
+                {attachments.map((att) => (
+                  <a
+                    key={att.filename}
+                    href={attachmentAPI.getUrl(challenge.id, att.filename)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="attachment-link mono"
+                  >
+                    {getFileIcon(att.mimeType)} {att.originalName}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!challenge.solved && (
             <div className="card-hint">
               <span className="hint-label mono">&gt; HINT:</span>
@@ -224,3 +263,4 @@ export function ChallengeCard({ challenge, index, onSolve }: ChallengeCardProps)
     </article>
   );
 }
+

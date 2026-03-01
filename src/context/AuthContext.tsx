@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { authAPI, setToken, clearToken, isAuthenticated as checkAuth } from '../api';
 
 interface AuthUser {
-  id: number;
+  id: string;
   username: string;
   email: string;
   points?: number;
@@ -47,6 +47,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
     setIsLoading(false);
+
+    const handleExpired = () => {
+      clearToken();
+      setUser(null);
+    };
+    window.addEventListener('auth:expired', handleExpired);
+    return () => window.removeEventListener('auth:expired', handleExpired);
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {

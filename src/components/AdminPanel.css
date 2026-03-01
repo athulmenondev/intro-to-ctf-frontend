@@ -524,6 +524,141 @@
   grid-template-columns: 60px 1fr 80px 80px;
 }
 
+/* ── Section Actions ── */
+.admin-section-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ── Danger Outline Button ── */
+.admin-btn--danger-outline {
+  background: transparent;
+  border: 1px solid rgba(255, 59, 92, 0.3);
+  color: #ff3b5c;
+}
+
+.admin-btn--danger-outline:hover {
+  background: rgba(255, 59, 92, 0.1);
+  border-color: rgba(255, 59, 92, 0.5);
+}
+
+/* ── Attachment Chips ── */
+.admin-attachments-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 18px 8px;
+  align-items: center;
+}
+
+.admin-attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: rgba(0, 180, 255, 0.08);
+  border: 1px solid rgba(0, 180, 255, 0.2);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.admin-attachment-delete {
+  background: none;
+  border: none;
+  color: #ff3b5c;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.admin-attachment-delete:hover {
+  opacity: 1;
+}
+
+.admin-upload-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  background: rgba(0, 255, 157, 0.06);
+  border: 1px dashed rgba(0, 255, 157, 0.25);
+  border-radius: 4px;
+  font-size: 0.68rem;
+  color: var(--neon-emerald);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-upload-chip:hover {
+  background: rgba(0, 255, 157, 0.12);
+  border-color: var(--neon-emerald);
+}
+
+/* ── File Upload Zone (in form) ── */
+.admin-file-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: rgba(0, 180, 255, 0.06);
+  border: 1px solid rgba(0, 180, 255, 0.18);
+  border-radius: 4px;
+}
+
+.admin-file-remove {
+  background: none;
+  border: none;
+  color: #ff3b5c;
+  font-size: 1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.admin-file-remove:hover {
+  opacity: 1;
+}
+
+.admin-file-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 16px;
+  background: rgba(0, 255, 157, 0.03);
+  border: 1px dashed rgba(0, 255, 157, 0.2);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.72rem;
+  color: var(--neon-emerald, #00ff9d);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.admin-file-picker:hover {
+  background: rgba(0, 255, 157, 0.08);
+  border-color: var(--neon-emerald, #00ff9d);
+  box-shadow: 0 0 12px rgba(0, 255, 157, 0.08);
+}
+
 /* ── Participants table ── */
 .admin-table-header--participants,
 .admin-table-row--participants {

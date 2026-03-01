@@ -6,6 +6,7 @@ import { ChallengeCard } from './components/ChallengeCard';
 import { Leaderboard } from './components/Leaderboard';
 import { AuthPage } from './components/AuthPage';
 import { AdminPanel } from './components/AdminPanel';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { challengeAPI, leaderboardAPI } from './api';
 import type { Challenge, LeaderboardEntry } from './types';
@@ -146,6 +147,9 @@ function Dashboard() {
           <span className="footer-text mono">
             <span className="footer-bracket">&gt;</span> CTF Arena v1.0
           </span>
+          <span className="footer-text mono">
+            <span className="footer-bracket">&gt;</span> © 2026 Solasta | All Rights Reserved.
+          </span>
           <span className="footer-separator">·</span>
           <span className="footer-text">
             Built for beginners, by the community
@@ -178,9 +182,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 
