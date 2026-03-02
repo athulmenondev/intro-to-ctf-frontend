@@ -73,6 +73,11 @@ export function AdminPanel() {
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [challengeAttachments, setChallengeAttachments] = useState<Record<string, Attachment[]>>({});
 
+  // Participant Logs
+  const [selectedParticipantLogs, setSelectedParticipantLogs] = useState<{ id: string; username: string } | null>(null);
+  const [participantSubmissions, setParticipantSubmissions] = useState<import('../api').ParticipantSubmission[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -257,6 +262,24 @@ export function AdminPanel() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Delete failed');
     }
+  };
+
+  const handleViewParticipantLogs = async (participantId: string, username: string) => {
+    try {
+      setIsLoadingLogs(true);
+      setSelectedParticipantLogs({ id: participantId, username });
+      const res = await adminAPI.getParticipantSubmissions(participantId);
+      setParticipantSubmissions(res.submissions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load participant logs');
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  };
+
+  const closeParticipantLogs = () => {
+    setSelectedParticipantLogs(null);
+    setParticipantSubmissions([]);
   };
 
   if (isLoading) {
@@ -734,6 +757,7 @@ export function AdminPanel() {
                 <span className="admin-col admin-col--p-subs">SUBS</span>
                 <span className="admin-col admin-col--p-acc">ACC%</span>
                 <span className="admin-col admin-col--p-joined">JOINED</span>
+                <span className="admin-col admin-col--p-last">LAST SOLVED</span>
                 <span className="admin-col admin-col--p-actions">ACTIONS</span>
               </div>
               {participants.map((p) => (
@@ -754,6 +778,7 @@ export function AdminPanel() {
                     </span>
                   </span>
                   <span className="admin-col admin-col--p-joined">{formatRelativeDate(p.joinedAt)}</span>
+                  <span className="admin-col admin-col--p-last">{p.lastSolveAt ? formatRelativeDate(p.lastSolveAt) : '-'}</span>
                   <span className="admin-col admin-col--p-actions">
                     {deleteParticipantId === p.id ? (
                       <span className="admin-delete-confirm">
@@ -771,12 +796,20 @@ export function AdminPanel() {
                         </button>
                       </span>
                     ) : (
-                      <button
-                        className="admin-btn admin-btn--danger-sm mono"
-                        onClick={() => setDeleteParticipantId(p.id)}
-                      >
-                        DEL
-                      </button>
+                      <>
+                        <button
+                          className="admin-btn admin-btn--ghost-sm mono"
+                          onClick={() => handleViewParticipantLogs(p.id, p.username)}
+                        >
+                          LOGS
+                        </button>
+                        <button
+                          className="admin-btn admin-btn--danger-sm mono"
+                          onClick={() => setDeleteParticipantId(p.id)}
+                        >
+                          DEL
+                        </button>
+                      </>
                     )}
                   </span>
                 </div>
@@ -788,6 +821,48 @@ export function AdminPanel() {
           </div>
         )}
       </main>
+
+      {/* Participant Logs Modal */}
+      {selectedParticipantLogs && (
+        <div className="admin-modal-overlay">
+          <div className="admin-modal">
+            <div className="admin-modal-header">
+              <h3 className="admin-modal-title mono">
+                <span className="admin-bracket">//</span> LOGS: {selectedParticipantLogs.username}
+              </h3>
+              <button className="admin-modal-close" onClick={closeParticipantLogs}>×</button>
+            </div>
+            <div className="admin-modal-body">
+              {isLoadingLogs ? (
+                <div className="admin-logs-loading mono">Loading logs...</div>
+              ) : participantSubmissions.length > 0 ? (
+                <div className="admin-logs-table">
+                  <div className="admin-logs-header mono">
+                    <span>TIME</span>
+                    <span>CHALLENGE</span>
+                    <span>FLAG</span>
+                    <span>STATUS</span>
+                  </div>
+                  <div className="admin-logs-content">
+                    {participantSubmissions.map((sub) => (
+                      <div key={sub.id} className="admin-logs-row">
+                        <span className="admin-log-time">{formatRelativeDate(sub.submittedAt)}</span>
+                        <span className="admin-log-chal">{sub.challengeTitle} ({sub.points}pts)</span>
+                        <span className="admin-log-flag mono">{sub.submittedFlag}</span>
+                        <span className={`admin-log-status ${sub.isCorrect ? 'admin-log-status--correct' : 'admin-log-status--wrong'}`}>
+                          {sub.isCorrect ? 'CORRECT' : 'WRONG'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="admin-empty mono">No submissions found.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="app-footer" id="admin-footer">

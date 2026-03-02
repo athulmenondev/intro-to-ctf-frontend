@@ -255,7 +255,27 @@ export const adminAPI = {
   /** Delete a file attachment */
   deleteAttachment: (challengeId: string, filename: string): Promise<{ message: string }> =>
     apiFetch(`/admin/challenges/${challengeId}/attachments/${filename}`, { method: 'DELETE' }),
+
+  /** Get participant submissions */
+  getParticipantSubmissions: (id: string): Promise<ParticipantSubmissionsResponse> =>
+    apiFetch<ParticipantSubmissionsResponse>(`/admin/participants/${id}/submissions`),
 };
+
+export interface ParticipantSubmission {
+  id: string;
+  challengeId: string;
+  challengeTitle: string;
+  category: string;
+  points: number;
+  submittedFlag: string;
+  isCorrect: boolean;
+  submittedAt: string;
+}
+
+export interface ParticipantSubmissionsResponse {
+  participant: { id: string; username: string };
+  submissions: ParticipantSubmission[];
+}
 
 // ─── Attachment Types ──────────────────────────────────────
 
@@ -280,6 +300,7 @@ export interface Participant {
   accuracy: number;
   joinedAt: string;
   lastActive: string;
+  lastSolveAt: string | null;
 }
 
 interface ParticipantsResponse {
