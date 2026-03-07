@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './AdminPanel.css';
 import { adminAPI, leaderboardAPI, attachmentAPI } from '../api';
-import type { AdminChallenge, Participant, Attachment, BackendLogEntry, BackendLogLevel } from '../api';
+import type { AdminChallenge, Participant, Attachment, BackendLogEntry, BackendLogLevel, SubmissionFeedEntry } from '../api';
 import type { LeaderboardEntry } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { TrophyIcon, TerminalIcon } from './Icons';
@@ -45,7 +45,7 @@ export function AdminPanel() {
   const { user, logout } = useAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<'challenges' | 'leaderboard' | 'participants' | 'logs'>('challenges');
+  const [activeTab, setActiveTab] = useState<'challenges' | 'leaderboard' | 'participants' | 'submissions' | 'logs'>('challenges');
   const [challenges, setChallenges] = useState<AdminChallenge[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -84,6 +84,12 @@ export function AdminPanel() {
   const [logLevelFilter, setLogLevelFilter] = useState<string>('all');
   const [isLoadingBackendLogs, setIsLoadingBackendLogs] = useState(false);
   const [logsAutoRefresh, setLogsAutoRefresh] = useState(false);
+
+  // Submission Feed
+  const [submissionFeed, setSubmissionFeed] = useState<SubmissionFeedEntry[]>([]);
+  const [isLoadingFeed, setIsLoadingFeed] = useState(false);
+  const [feedFilter, setFeedFilter] = useState<'all' | 'correct' | 'wrong'>('all');
+  const [feedAutoRefresh, setFeedAutoRefresh] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -327,6 +333,32 @@ export function AdminPanel() {
     }
   }, [logLevelFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Submission Feed
+  const fetchSubmissionFeed = useCallback(async () => {
+    try {
+      setIsLoadingFeed(true);
+      const res = await adminAPI.getSubmissionFeed(300);
+      setSubmissionFeed(res.feed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load submission feed');
+    } finally {
+      setIsLoadingFeed(false);
+    }
+  }, []);
+
+  // Auto-refresh submission feed
+  useEffect(() => {
+    if (activeTab !== 'submissions' || !feedAutoRefresh) return;
+    const interval = setInterval(fetchSubmissionFeed, 5000);
+    return () => clearInterval(interval);
+  }, [activeTab, feedAutoRefresh, fetchSubmissionFeed]);
+
+  const filteredFeed = submissionFeed.filter(s => {
+    if (feedFilter === 'correct') return s.isCorrect;
+    if (feedFilter === 'wrong') return !s.isCorrect;
+    return true;
+  });
+
   if (isLoading) {
     return (
       <div className="app" id="admin-panel">
@@ -417,6 +449,12 @@ export function AdminPanel() {
             onClick={() => setActiveTab('participants')}
           >
             // PARTICIPANTS
+          </button>
+          <button
+            className={`admin-tab mono ${activeTab === 'submissions' ? 'admin-tab--active' : ''}`}
+            onClick={() => { setActiveTab('submissions'); fetchSubmissionFeed(); }}
+          >
+            // SUBMISSIONS
           </button>
           <button
             className={`admin-tab mono ${activeTab === 'logs' ? 'admin-tab--active' : ''}`}
@@ -867,6 +905,84 @@ export function AdminPanel() {
               ))}
               {participants.length === 0 && (
                 <div className="admin-empty mono">No participants registered yet.</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Submissions Feed Tab */}
+        {activeTab === 'submissions' && (
+          <div className="admin-section">
+            <div className="admin-section-header">
+              <h2 className="admin-section-title mono">
+                <span className="admin-bracket">//</span> Submission Feed ({filteredFeed.length})
+              </h2>
+              <div className="admin-section-actions">
+                <select
+                  className="admin-input admin-select mono admin-log-filter-select"
+                  value={feedFilter}
+                  onChange={(e) => setFeedFilter(e.target.value as 'all' | 'correct' | 'wrong')}
+                  style={{ padding: '4px 28px 4px 8px', fontSize: '0.72rem', width: 120 }}
+                >
+                  <option value="all">ALL</option>
+                  <option value="correct">✓ CORRECT</option>
+                  <option value="wrong">✗ WRONG</option>
+                </select>
+                <button
+                  className={`admin-btn mono ${feedAutoRefresh ? 'admin-btn--primary' : 'admin-btn--ghost'}`}
+                  onClick={() => setFeedAutoRefresh(!feedAutoRefresh)}
+                  style={{ padding: '4px 12px', fontSize: '0.72rem' }}
+                >
+                  {feedAutoRefresh ? '⏸ AUTO' : '▶ AUTO'}
+                </button>
+                <button className="admin-btn admin-btn--ghost mono" onClick={fetchSubmissionFeed} style={{ padding: '4px 12px', fontSize: '0.72rem' }}>
+                  ↻ REFRESH
+                </button>
+              </div>
+            </div>
+
+            <div className="admin-feed-container">
+              {isLoadingFeed && filteredFeed.length === 0 ? (
+                <div className="admin-logs-loading mono">Loading submissions...</div>
+              ) : filteredFeed.length > 0 ? (
+                <div className="admin-feed-table">
+                  <div className="admin-feed-header mono">
+                    <span className="admin-feed-col admin-feed-col--time">TIME</span>
+                    <span className="admin-feed-col admin-feed-col--user">TEAM</span>
+                    <span className="admin-feed-col admin-feed-col--challenge">CHALLENGE</span>
+                    <span className="admin-feed-col admin-feed-col--cat">CAT</span>
+                    <span className="admin-feed-col admin-feed-col--flag">SUBMITTED FLAG</span>
+                    <span className="admin-feed-col admin-feed-col--status">STATUS</span>
+                  </div>
+                  <div className="admin-feed-rows">
+                    {filteredFeed.map((entry) => (
+                      <div key={entry.id} className={`admin-feed-row ${entry.isCorrect ? 'admin-feed-row--correct' : 'admin-feed-row--wrong'}`}>
+                        <span className="admin-feed-col admin-feed-col--time">
+                          {new Date(entry.submittedAt).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          <span className="admin-feed-date">{new Date(entry.submittedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        </span>
+                        <span className="admin-feed-col admin-feed-col--user mono">{entry.username}</span>
+                        <span className="admin-feed-col admin-feed-col--challenge">
+                          {entry.challengeTitle}
+                          <span className="admin-feed-pts mono">{entry.points}pts</span>
+                        </span>
+                        <span className="admin-feed-col admin-feed-col--cat">
+                          <span className={`admin-cat-badge admin-cat-badge--${entry.category.toLowerCase()}`}>
+                            {entry.category}
+                          </span>
+                        </span>
+                        <span className="admin-feed-col admin-feed-col--flag mono">{entry.submittedFlag}</span>
+                        <span className="admin-feed-col admin-feed-col--status">
+                          <span className={`admin-feed-status ${entry.isCorrect ? 'admin-feed-status--correct' : 'admin-feed-status--wrong'}`}>
+                            {entry.isCorrect ? '✓ SOLVED' : '✗ WRONG'}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="admin-empty mono">No submissions yet. Participants need to start solving challenges!</div>
               )}
             </div>
           </div>

@@ -272,7 +272,29 @@ export const adminAPI = {
   /** Clear backend logs */
   clearBackendLogs: (): Promise<{ message: string }> =>
     apiFetch('/admin/logs', { method: 'DELETE' }),
+
+  /** Get global submission feed */
+  getSubmissionFeed: (limit = 200): Promise<SubmissionFeedResponse> =>
+    apiFetch<SubmissionFeedResponse>(`/admin/submission-feed?limit=${limit}`),
 };
+
+export interface SubmissionFeedEntry {
+  id: string;
+  username: string;
+  userId: string;
+  challengeId: string;
+  challengeTitle: string;
+  category: string;
+  points: number;
+  submittedFlag: string;
+  isCorrect: boolean;
+  submittedAt: string;
+}
+
+export interface SubmissionFeedResponse {
+  feed: SubmissionFeedEntry[];
+  total: number;
+}
 
 export interface ParticipantSubmission {
   id: string;
