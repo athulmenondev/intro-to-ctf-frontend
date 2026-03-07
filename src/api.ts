@@ -259,6 +259,19 @@ export const adminAPI = {
   /** Get participant submissions */
   getParticipantSubmissions: (id: string): Promise<ParticipantSubmissionsResponse> =>
     apiFetch<ParticipantSubmissionsResponse>(`/admin/participants/${id}/submissions`),
+
+  /** Get backend logs */
+  getBackendLogs: (options?: { level?: string; limit?: number }): Promise<BackendLogsResponse> => {
+    const params = new URLSearchParams();
+    if (options?.level) params.set('level', options.level);
+    if (options?.limit) params.set('limit', String(options.limit));
+    const qs = params.toString();
+    return apiFetch<BackendLogsResponse>(`/admin/logs${qs ? `?${qs}` : ''}`);
+  },
+
+  /** Clear backend logs */
+  clearBackendLogs: (): Promise<{ message: string }> =>
+    apiFetch('/admin/logs', { method: 'DELETE' }),
 };
 
 export interface ParticipantSubmission {
@@ -319,4 +332,24 @@ export const attachmentAPI = {
   getUrl: (challengeId: string, filename: string): string =>
     `${API_BASE}/challenges/${challengeId}/attachments/${filename}`,
 };
+
+// ─── Backend Log Types ─────────────────────────────────────
+
+export type BackendLogLevel = 'info' | 'warn' | 'error' | 'auth' | 'flag' | 'admin';
+
+export interface BackendLogEntry {
+  id: string;
+  timestamp: string;
+  level: BackendLogLevel;
+  message: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface BackendLogsResponse {
+  logs: BackendLogEntry[];
+  stats: {
+    total: number;
+    counts: Record<BackendLogLevel, number>;
+  };
+}
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './AdminPanel.css';
 import { adminAPI, leaderboardAPI, attachmentAPI } from '../api';
-import type { AdminChallenge, Participant, Attachment } from '../api';
+import type { AdminChallenge, Participant, Attachment, BackendLogEntry, BackendLogLevel } from '../api';
 import type { LeaderboardEntry } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { TrophyIcon, TerminalIcon } from './Icons';
@@ -45,7 +45,7 @@ export function AdminPanel() {
   const { user, logout } = useAuth();
 
   // State
-  const [activeTab, setActiveTab] = useState<'challenges' | 'leaderboard' | 'participants'>('challenges');
+  const [activeTab, setActiveTab] = useState<'challenges' | 'leaderboard' | 'participants' | 'logs'>('challenges');
   const [challenges, setChallenges] = useState<AdminChallenge[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -77,6 +77,13 @@ export function AdminPanel() {
   const [selectedParticipantLogs, setSelectedParticipantLogs] = useState<{ id: string; username: string } | null>(null);
   const [participantSubmissions, setParticipantSubmissions] = useState<import('../api').ParticipantSubmission[]>([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+
+  // Backend Logs
+  const [backendLogs, setBackendLogs] = useState<BackendLogEntry[]>([]);
+  const [logStats, setLogStats] = useState<{ total: number; counts: Record<BackendLogLevel, number> } | null>(null);
+  const [logLevelFilter, setLogLevelFilter] = useState<string>('all');
+  const [isLoadingBackendLogs, setIsLoadingBackendLogs] = useState(false);
+  const [logsAutoRefresh, setLogsAutoRefresh] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -282,6 +289,44 @@ export function AdminPanel() {
     setParticipantSubmissions([]);
   };
 
+  const fetchBackendLogs = useCallback(async () => {
+    try {
+      setIsLoadingBackendLogs(true);
+      const levelOpt = logLevelFilter !== 'all' ? logLevelFilter : undefined;
+      const res = await adminAPI.getBackendLogs({ level: levelOpt, limit: 300 });
+      setBackendLogs(res.logs);
+      setLogStats(res.stats);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load backend logs');
+    } finally {
+      setIsLoadingBackendLogs(false);
+    }
+  }, [logLevelFilter]);
+
+  const handleClearBackendLogs = async () => {
+    try {
+      await adminAPI.clearBackendLogs();
+      setSuccessMessage('Backend logs cleared.');
+      await fetchBackendLogs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to clear logs');
+    }
+  };
+
+  // Auto-refresh logs
+  useEffect(() => {
+    if (activeTab !== 'logs' || !logsAutoRefresh) return;
+    const interval = setInterval(fetchBackendLogs, 5000);
+    return () => clearInterval(interval);
+  }, [activeTab, logsAutoRefresh, fetchBackendLogs]);
+
+  // Refetch logs when filter changes
+  useEffect(() => {
+    if (activeTab === 'logs') {
+      fetchBackendLogs();
+    }
+  }, [logLevelFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (isLoading) {
     return (
       <div className="app" id="admin-panel">
@@ -372,6 +417,12 @@ export function AdminPanel() {
             onClick={() => setActiveTab('participants')}
           >
             // PARTICIPANTS
+          </button>
+          <button
+            className={`admin-tab mono ${activeTab === 'logs' ? 'admin-tab--active' : ''}`}
+            onClick={() => { setActiveTab('logs'); fetchBackendLogs(); }}
+          >
+            // LOGS
           </button>
         </div>
 
@@ -816,6 +867,89 @@ export function AdminPanel() {
               ))}
               {participants.length === 0 && (
                 <div className="admin-empty mono">No participants registered yet.</div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Backend Logs Tab */}
+        {activeTab === 'logs' && (
+          <div className="admin-section">
+            <div className="admin-section-header">
+              <h2 className="admin-section-title mono">
+                <TerminalIcon size={16} />
+                <span style={{ marginLeft: 8 }}>Backend Logs</span>
+                {logStats && (
+                  <span className="admin-log-total-badge">{logStats.total}</span>
+                )}
+              </h2>
+              <div className="admin-section-actions">
+                <select
+                  className="admin-input admin-select mono admin-log-filter-select"
+                  value={logLevelFilter}
+                  onChange={(e) => { setLogLevelFilter(e.target.value); }}
+                  style={{ padding: '4px 28px 4px 8px', fontSize: '0.72rem', width: 120 }}
+                >
+                  <option value="all">ALL LEVELS</option>
+                  <option value="info">INFO</option>
+                  <option value="warn">WARN</option>
+                  <option value="error">ERROR</option>
+                  <option value="auth">AUTH</option>
+                  <option value="flag">FLAG</option>
+                  <option value="admin">ADMIN</option>
+                </select>
+                <button
+                  className={`admin-btn mono ${logsAutoRefresh ? 'admin-btn--primary' : 'admin-btn--ghost'}`}
+                  onClick={() => setLogsAutoRefresh(!logsAutoRefresh)}
+                  style={{ padding: '4px 12px', fontSize: '0.72rem' }}
+                >
+                  {logsAutoRefresh ? '⏸ AUTO' : '▶ AUTO'}
+                </button>
+                <button className="admin-btn admin-btn--ghost mono" onClick={fetchBackendLogs} style={{ padding: '4px 12px', fontSize: '0.72rem' }}>
+                  ↻ REFRESH
+                </button>
+                <button className="admin-btn admin-btn--danger-outline mono" onClick={handleClearBackendLogs} style={{ padding: '4px 12px', fontSize: '0.72rem' }}>
+                  ⚠ CLEAR
+                </button>
+              </div>
+            </div>
+
+            {/* Log Stats Bar */}
+            {logStats && (
+              <div className="admin-log-stats-bar">
+                {(Object.entries(logStats.counts) as [string, number][]).map(([level, count]) => (
+                  <button
+                    key={level}
+                    className={`admin-log-stat-chip admin-log-stat-chip--${level} ${logLevelFilter === level ? 'admin-log-stat-chip--selected' : ''}`}
+                    onClick={() => setLogLevelFilter(logLevelFilter === level ? 'all' : level)}
+                  >
+                    <span className="admin-log-stat-label mono">{level.toUpperCase()}</span>
+                    <span className="admin-log-stat-count mono">{count}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Log Entries */}
+            <div className="admin-backend-logs-container">
+              {isLoadingBackendLogs && backendLogs.length === 0 ? (
+                <div className="admin-logs-loading mono">Loading logs...</div>
+              ) : backendLogs.length > 0 ? (
+                <div className="admin-backend-logs-list">
+                  {backendLogs.map((log) => (
+                    <div key={log.id} className={`admin-backend-log-row admin-backend-log-row--${log.level}`}>
+                      <span className="admin-backend-log-time mono">
+                        {new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </span>
+                      <span className={`admin-backend-log-level mono admin-backend-log-level--${log.level}`}>
+                        {log.level.toUpperCase().padEnd(5)}
+                      </span>
+                      <span className="admin-backend-log-msg mono">{log.message}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="admin-empty mono">No logs recorded yet. Interact with the CTF to generate logs.</div>
               )}
             </div>
           </div>

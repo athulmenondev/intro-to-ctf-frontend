@@ -946,3 +946,170 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════
+   Backend Logs Tab
+   ═══════════════════════════════════════════════════ */
+
+.admin-log-total-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 20px;
+  padding: 0 8px;
+  margin-left: 10px;
+  background: rgba(0, 180, 255, 0.12);
+  border: 1px solid rgba(0, 180, 255, 0.25);
+  border-radius: 10px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--neon-cyan);
+  letter-spacing: 0.05em;
+}
+
+/* ── Log Stats Bar ── */
+.admin-log-stats-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-log-stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-dim);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-log-stat-chip:hover {
+  border-color: var(--border-medium);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.admin-log-stat-chip--selected {
+  border-color: var(--neon-cyan) !important;
+  background: rgba(0, 180, 255, 0.08) !important;
+}
+
+.admin-log-stat-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.admin-log-stat-count {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* Level colors for stat chips */
+.admin-log-stat-chip--info .admin-log-stat-label { color: #00b4ff; }
+.admin-log-stat-chip--warn .admin-log-stat-label { color: #ffb800; }
+.admin-log-stat-chip--error .admin-log-stat-label { color: #ff3b5c; }
+.admin-log-stat-chip--auth .admin-log-stat-label { color: #00ff9d; }
+.admin-log-stat-chip--flag .admin-log-stat-label { color: #a855f7; }
+.admin-log-stat-chip--admin .admin-log-stat-label { color: #ff8c00; }
+
+/* ── Log Container ── */
+.admin-backend-logs-container {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.admin-backend-logs-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-backend-logs-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-backend-logs-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.admin-backend-logs-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.admin-backend-logs-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Log Row ── */
+.admin-backend-log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  transition: background 0.1s ease;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.admin-backend-log-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-backend-log-row:last-child {
+  border-bottom: none;
+}
+
+/* Subtle left border accent by level */
+.admin-backend-log-row--info { border-left: 2px solid rgba(0, 180, 255, 0.3); }
+.admin-backend-log-row--warn { border-left: 2px solid rgba(255, 184, 0, 0.4); }
+.admin-backend-log-row--error { border-left: 2px solid rgba(255, 59, 92, 0.5); background: rgba(255, 59, 92, 0.03); }
+.admin-backend-log-row--auth { border-left: 2px solid rgba(0, 255, 157, 0.3); }
+.admin-backend-log-row--flag { border-left: 2px solid rgba(168, 85, 247, 0.4); }
+.admin-backend-log-row--admin { border-left: 2px solid rgba(255, 140, 0, 0.4); }
+
+.admin-backend-log-time {
+  flex-shrink: 0;
+  width: 72px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.admin-backend-log-level {
+  flex-shrink: 0;
+  width: 48px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 1px 0;
+}
+
+.admin-backend-log-level--info { color: #00b4ff; }
+.admin-backend-log-level--warn { color: #ffb800; }
+.admin-backend-log-level--error { color: #ff3b5c; }
+.admin-backend-log-level--auth { color: #00ff9d; }
+.admin-backend-log-level--flag { color: #a855f7; }
+.admin-backend-log-level--admin { color: #ff8c00; }
+
+.admin-backend-log-msg {
+  flex: 1;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  word-break: break-word;
+}
+
+/* Filter select styling */
+.admin-log-filter-select {
+  background: var(--surface-dark) !important;
+}
+
